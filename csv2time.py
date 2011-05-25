@@ -51,6 +51,9 @@ if __name__ == '__main__':
             people = [person_pat.match(val).group(1) for val in row[1:-1]]
             continue
         
+        if not row[0]:
+            continue
+        
         if week_name and people:
         
             client_name = row[0]
