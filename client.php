@@ -39,14 +39,19 @@
         return array_values($names);
     }
     
-    function client_days(&$dbh, $name)
+    function client_synonyms_literal(&$dbh, $name)
     {
         $names = client_synonyms($dbh, $name);
         
         foreach($names as $i => $name)
             $names[$i] = sprintf("'%s'", mysql_real_escape_string($name, $dbh));
         
-        $names = join(', ', $names);
+        return join(', ', $names);
+    }
+    
+    function client_days(&$dbh, $name)
+    {
+        $names = client_synonyms_literal($dbh, $name);
         
         $q = sprintf("SELECT week, SUM(days) AS days
                       FROM utilization
@@ -58,7 +63,27 @@
         $res = mysql_query($q, $dbh);
         $rows = array();
         
-        while($row = mysql_fetch_array($res, MYSQL_NUM))
+        while($row = mysql_fetch_array($res, MYSQL_ASSOC))
+            $rows[] = $row;
+        
+        return $rows;
+    }
+    
+    function client_people(&$dbh, $name)
+    {
+        $names = client_synonyms_literal($dbh, $name);
+        
+        $q = sprintf("SELECT person, SUM(days) AS days
+                      FROM utilization
+                      WHERE client IN (%s)
+                      GROUP BY person
+                      ORDER BY days DESC",
+                      $names);
+
+        $res = mysql_query($q, $dbh);
+        $rows = array();
+        
+        while($row = mysql_fetch_array($res, MYSQL_ASSOC))
             $rows[] = $row;
         
         return $rows;
@@ -66,8 +91,10 @@
     
     foreach(client_days($dbh, $_GET['name']) as $week)
     {
-        $week['time'] = strtotime($week[0]);
+        $week['time'] = strtotime($week['week']);
         print_r($week);
     }
+    
+    print_r(client_people($dbh, $_GET['name']));
 
 ?>
