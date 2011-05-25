@@ -1,0 +1,9 @@
+CREATE TABLE utilization
+(
+    `week`      VARCHAR(8) NOT NULL,
+    `client`    VARCHAR(32) NOT NULL,
+    `person`    VARCHAR(16) NOT NULL,
+    `days`      FLOAT,
+    
+    PRIMARY KEY (`week`, `client`, `person`)
+);
