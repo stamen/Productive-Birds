@@ -3,7 +3,7 @@ from csv import reader
 from re import compile, I
 from datetime import date
 
-week_pat = compile(r'^week of (\d+)/(\d+) - (\d+)/(\d+)$', I)
+week_pat = compile(r'^week of (\d+)/(\d+) *- *(\d+)/(\d+)$', I)
 person_pat = compile(r'^(\w+)( act(ual)?)?$', I)
 
 today = date.today()
