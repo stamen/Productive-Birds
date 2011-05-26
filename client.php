@@ -102,11 +102,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>blah</title>
-	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>blah</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <script src="protovis-r3.2.js" type="text/javascript"></script>
 </head>
 <body>
-<tt><?= json_encode($client_days) ?></tt>
-<tt><?= json_encode($client_people) ?></tt>
+
+    <script type="text/javascript">
+    <!--
+    
+        var data = <?=json_encode($client_days)?>;
+        
+        console.log(data);
+        
+        var weeks = [],
+            times = [],
+            dates = [],
+            days = [],
+            total = 0,
+            cumulative = [],
+            first = data[0],
+            last = null;
+        
+        while(data.length)
+        {
+            weeks.push(data[0].week);
+            times.push(data[0].time);
+            dates.push(data[0].date);
+            days.push(data[0].days);
+            
+            total += data[0].days;
+            last = data.shift();
+            
+            cumulative.push({time: last.time, total: total});
+        }
+        
+        console.log([weeks, times, dates, days, cumulative]);
+        
+        var w = 800,
+            h = 400,
+            x = pv.Scale.linear(first.time - 7*86400, last.time).range(0, w),
+            y = pv.Scale.linear(0, total).range(0, h);
+        
+        var vis = new pv.Panel()
+            .width(w)
+            .height(h);
+        
+        vis.add(pv.Line)
+            .data(cumulative)
+            .left(function(d) { return x(d.time) })
+            .bottom(function(d) { return y(d.total) })
+            .lineWidth(1)
+          .add(pv.Dot);
+        
+        vis.render();
+    
+    //-->
+    </script>
+    <tt><?= json_encode($client_people) ?></tt>
 </body>
 </html>
