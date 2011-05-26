@@ -1,7 +1,5 @@
 <?php
 
-    header('content-type: text/plain');
-
     $dbh = mysql_connect('localhost', 'time', '');
     mysql_select_db('timetracking', $dbh);
     
@@ -64,7 +62,12 @@
         $rows = array();
         
         while($row = mysql_fetch_array($res, MYSQL_ASSOC))
+        {
+            $row['days']= floatval($row['days']);
+            $row['time'] = strtotime("{$row['week']}-5 12:00:00");
+            $row['date'] = date('M j', $row['time']);
             $rows[] = $row;
+        }
         
         return $rows;
     }
@@ -84,17 +87,26 @@
         $rows = array();
         
         while($row = mysql_fetch_array($res, MYSQL_ASSOC))
+        {
+            $row['days']= floatval($row['days']);
             $rows[] = $row;
+        }
         
         return $rows;
     }
     
-    foreach(client_days($dbh, $_GET['name']) as $week)
-    {
-        $week['time'] = strtotime($week['week']);
-        print_r($week);
-    }
-    
-    print_r(client_people($dbh, $_GET['name']));
+    $client_days = client_days($dbh, $_GET['name']);
+    $client_people = client_people($dbh, $_GET['name']);
 
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>blah</title>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+</head>
+<body>
+<tt><?= json_encode($client_days) ?></tt>
+<tt><?= json_encode($client_people) ?></tt>
+</body>
+</html>
