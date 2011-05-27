@@ -4,6 +4,7 @@ CREATE TABLE utilization
     `client`    VARCHAR(32) NOT NULL,
     `person`    VARCHAR(16) NOT NULL,
     `days`      FLOAT,
+    `count`     TINYINT DEFAULT 1,
     
     PRIMARY KEY (`week`, `client`, `person`)
 );
@@ -14,6 +15,15 @@ CREATE TABLE same_clients
     `client2`   VARCHAR(32) NOT NULL,
     
     PRIMARY KEY (`client1`, `client2`)
+);
+
+CREATE TABLE client_limits
+(
+    `client`    VARCHAR(32) NOT NULL,
+    `ends`      VARCHAR(10) NOT NULL,
+    `days`      FLOAT NOT NULL,
+    
+    PRIMARY KEY (`client`)
 );
 
 SELECT ca.client1 AS ca1,
