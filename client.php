@@ -98,7 +98,7 @@
     
     function client_limits(&$dbh, $name)
     {
-        $q = sprintf("SELECT ends, days
+        $q = sprintf("SELECT client AS name, ends, days, budget
                       FROM client_limits
                       WHERE client = '%s'",
                       mysql_real_escape_string($name, $dbh));
@@ -108,7 +108,7 @@
         if($row = mysql_fetch_array($res, MYSQL_ASSOC))
         {
             $row['days']= floatval($row['days']);
-            $row['time'] = strtotime($row['ends']);
+            $row['time'] = strtotime("{$row['ends']} 12:00:00");
             $row['date'] = date('M j', $row['time']);
             return $row;
         }
@@ -119,6 +119,16 @@
     $client_days = client_days($dbh, $_GET['name']);
     $client_people = client_people($dbh, $_GET['name']);
     $client_limits = client_limits($dbh, $_GET['name']);
+    
+    function nice_int($int)
+    {
+        $str = sprintf('%d', $int);
+        
+        while(preg_match('/\B(\d\d\d)\b/', $str))
+            $str = preg_replace('/\B(\d\d\d)\b/', ',\1', $str);
+        
+        return $str;
+    }
 
 ?>
 <!DOCTYPE html>
@@ -127,9 +137,16 @@
     <title>blah</title>
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <script src="protovis-r3.2.js" type="text/javascript"></script>
+    <style type="text/css" title="text/css">
+    <!--
+        h1 { font: 18px Georgia; }
+    -->
+    </style>
 </head>
 <body>
+    <h1><?= $client_limits['name'] ?> ($<?= nice_int($client_limits['budget']) ?>)</h1>
 
+    <p>
     <script type="text/javascript">
     <!--
     
@@ -151,7 +168,7 @@
             last = data[i];
         }
         
-        var w = 1000,
+        var w = 960,
             h = 400,
             x = pv.Scale.linear(start.time, Math.max(last.time, limit.time)).range(0, w),
             y = pv.Scale.linear(0, Math.max(total, limit.days)).range(0, h),
@@ -162,62 +179,17 @@
             .width(w)
             .height(h)
             .left(40)
-            .right(20)
+            .right(25)
             .bottom(30)
             .top(30);
         
         // area of profitability
         vis.add(pv.Area)
-            .data([{time: start.time, total: 0}, {time: limit.time, total: limit.days}])
+            .data([{time: start.time, total: 0}, {time: Math.max(last.time, limit.time), total: limit.days}])
             .left(function(d) { return x(d.time) })
             .height(function(d) { return y(d.total) })
             .bottom(0)
             .fillStyle('#eee');
-        
-        // bottom rule
-        vis.add(pv.Rule)
-            .bottom(y(0))
-            .strokeStyle('#ccc')
-            .left(0)
-            .right(0);
-        
-        // top rule
-        vis.add(pv.Rule)
-            .bottom(y((limit.days)))
-            .strokeStyle('#f90')
-            .lineWidth(3)
-            .left(0)
-            .right(0);
-        
-        // left-hand rule
-        vis.add(pv.Rule)
-            .left(x(start.time))
-            .strokeStyle('#ccc')
-            .bottom(0)
-            .top(0);
-        
-        // left hand ticks
-        vis.add(pv.Rule)
-            .data(y.ticks())
-            .strokeStyle('#ccc')
-            .bottom(y)
-            .left(-5)
-            .width(5)
-          .anchor('left').add(pv.Label)
-            .text(y.tickFormat)
-            .font(small);
-        
-        // right-hand rule and label
-        vis.add(pv.Rule)
-            .left(x(limit.time))
-            .strokeStyle('#ccc')
-            .bottom(0)
-            .top(0)
-          .add(pv.Label)
-            .top(h - 6)
-            .text(function(d) { return limit.date })
-            .textAlign('right')
-            .font(large);
         
         // weekly vertical rules
         vis.add(pv.Rule)
@@ -231,27 +203,99 @@
             .textAlign('right')
             .font(small);
         
+        // bottom rule
+        vis.add(pv.Rule)
+            .bottom(y(0))
+            .strokeStyle('#ccc')
+            .left(0)
+            .right(0);
+        
+        // top rule
+        vis.add(pv.Rule)
+            .bottom(y((limit.days)))
+            .strokeStyle('#f90')
+            .lineWidth(2)
+            .left(0)
+            .right(0);
+        
+        // left-hand rule
+        vis.add(pv.Rule)
+            .left(x(start.time))
+            .strokeStyle('#ccc')
+            .bottom(0)
+            .top(0);
+        
+        // left hand ticks
+        vis.add(pv.Rule)
+            .data(y.ticks())
+            .visible(function() { return this.index > 0 })
+            .strokeStyle('#ccc')
+            .bottom(y)
+            .left(-5)
+            .width(5)
+          .anchor('left').add(pv.Label)
+            .text(y.tickFormat)
+            .font(small);
+        
+        // right-hand rule and label
+        vis.add(pv.Rule)
+            .left(x(limit.time))
+            .strokeStyle('#f90')
+            .lineWidth(2)
+            .bottom(0)
+            .height(y(limit.days))
+          .add(pv.Label)
+            .top(h - 6)
+            .text(function(d) { return limit.date })
+            .textAlign('right')
+            .font(large);
+        
         // weekly time
         vis.add(pv.Line)
+            /*
             .data(data)
             .left(function(d) { return x(d.time) })
             .bottom(function(d) { return y(d.total) })
-          //.interpolate('step-after')
+            .strokeStyle('white')
+            .lineWidth(8)
+            */
+          .add(pv.Line)
+            .data(data)
+            .left(function(d) { return x(d.time) })
+            .bottom(function(d) { return y(d.total) })
             .strokeStyle('#666')
             .lineWidth(4)
           .add(pv.Dot)
-            .size(40)
-            .visible(function(d) { return this.index > 0 })
-            .fillStyle('white')
+            .size(function(d) { return (this.index > 0) ? 40 : 20 })
+            .fillStyle(function(d) { return (this.index > 0) ? 'white' : '#666' })
           .anchor('top').add(pv.Label)
-            .text(function(d) { return d.total.toString() })
+            .text(function(d) { return d.total.toString().replace(/\.5$/, '½'); })
+            .visible(function() { return this.index > 0 })
             .textAlign('right')
             .font(large);
+        
+        // pig
+        vis.add(pv.Panel)
+            .width(46)
+            .height(46)
+            .left(x(Math.max(last.time, limit.time)) - 23)
+            .bottom(y(limit.days) - 23)
+          .add(pv.Image)
+            .url('pig.png')
+        
+        // bird
+        vis.add(pv.Panel)
+            .width(41)
+            .height(35)
+            .left(x(last.time) - 20)
+            .bottom(y(last.total) - 20)
+          .add(pv.Image)
+            .url('bird.png')
         
         vis.render();
     
     //-->
     </script>
-    <tt><?= json_encode($client_people) ?></tt>
+    </p>
 </body>
 </html>
