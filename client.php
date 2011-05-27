@@ -54,6 +54,7 @@
         $q = sprintf("SELECT week, SUM(days) AS days
                       FROM utilization
                       WHERE client IN (%s)
+                        AND `count` = 1
                       GROUP BY week
                       ORDER BY week",
                       $names);
@@ -95,8 +96,29 @@
         return $rows;
     }
     
+    function client_limits(&$dbh, $name)
+    {
+        $q = sprintf("SELECT ends, days
+                      FROM client_limits
+                      WHERE client = '%s'",
+                      mysql_real_escape_string($name, $dbh));
+        
+        $res = mysql_query($q, $dbh);
+        
+        if($row = mysql_fetch_array($res, MYSQL_ASSOC))
+        {
+            $row['days']= floatval($row['days']);
+            $row['time'] = strtotime($row['ends']);
+            $row['date'] = date('M j', $row['time']);
+            return $row;
+        }
+        
+        return null;
+    }
+    
     $client_days = client_days($dbh, $_GET['name']);
     $client_people = client_people($dbh, $_GET['name']);
+    $client_limits = client_limits($dbh, $_GET['name']);
 
 ?>
 <!DOCTYPE html>
@@ -112,48 +134,119 @@
     <!--
     
         var data = <?=json_encode($client_days)?>;
+        var limit = <?=json_encode($client_limits)?>;
         
         console.log(data);
         
-        var weeks = [],
-            times = [],
-            dates = [],
-            days = [],
-            total = 0,
-            cumulative = [],
-            first = data[0],
+        var total = 0,
             last = null;
         
-        while(data.length)
+        var start = {'days': 0, 'time': data[0].time - 7*86400, 'week': ''};
+        data.unshift(start);
+        
+        for(var i = 0; i < data.length; i++)
         {
-            weeks.push(data[0].week);
-            times.push(data[0].time);
-            dates.push(data[0].date);
-            days.push(data[0].days);
-            
-            total += data[0].days;
-            last = data.shift();
-            
-            cumulative.push({time: last.time, total: total});
+            total += data[i].days;
+            data[i].total = total;
+            last = data[i];
         }
         
-        console.log([weeks, times, dates, days, cumulative]);
-        
-        var w = 800,
+        var w = 1000,
             h = 400,
-            x = pv.Scale.linear(first.time - 7*86400, last.time).range(0, w),
-            y = pv.Scale.linear(0, total).range(0, h);
+            x = pv.Scale.linear(start.time, Math.max(last.time, limit.time)).range(0, w),
+            y = pv.Scale.linear(0, Math.max(total, limit.days)).range(0, h),
+            small = '13px Georgia',
+            large = '18px Georgia';
         
         var vis = new pv.Panel()
             .width(w)
-            .height(h);
+            .height(h)
+            .left(40)
+            .right(20)
+            .bottom(30)
+            .top(30);
         
+        // area of profitability
+        vis.add(pv.Area)
+            .data([{time: start.time, total: 0}, {time: limit.time, total: limit.days}])
+            .left(function(d) { return x(d.time) })
+            .height(function(d) { return y(d.total) })
+            .bottom(0)
+            .fillStyle('#eee');
+        
+        // bottom rule
+        vis.add(pv.Rule)
+            .bottom(y(0))
+            .strokeStyle('#ccc')
+            .left(0)
+            .right(0);
+        
+        // top rule
+        vis.add(pv.Rule)
+            .bottom(y((limit.days)))
+            .strokeStyle('#f90')
+            .lineWidth(3)
+            .left(0)
+            .right(0);
+        
+        // left-hand rule
+        vis.add(pv.Rule)
+            .left(x(start.time))
+            .strokeStyle('#ccc')
+            .bottom(0)
+            .top(0);
+        
+        // left hand ticks
+        vis.add(pv.Rule)
+            .data(y.ticks())
+            .strokeStyle('#ccc')
+            .bottom(y)
+            .left(-5)
+            .width(5)
+          .anchor('left').add(pv.Label)
+            .text(y.tickFormat)
+            .font(small);
+        
+        // right-hand rule and label
+        vis.add(pv.Rule)
+            .left(x(limit.time))
+            .strokeStyle('#ccc')
+            .bottom(0)
+            .top(0)
+          .add(pv.Label)
+            .top(h - 6)
+            .text(function(d) { return limit.date })
+            .textAlign('right')
+            .font(large);
+        
+        // weekly vertical rules
+        vis.add(pv.Rule)
+            .data(data)
+            .strokeStyle('#ccc')
+            .left(function(d) { return x(d.time) })
+            .height(function(d) { return y(d.total) })
+            .bottom(y(0))
+          .anchor('bottom').add(pv.Label)
+            .text(function(d) { return d.date })
+            .textAlign('right')
+            .font(small);
+        
+        // weekly time
         vis.add(pv.Line)
-            .data(cumulative)
+            .data(data)
             .left(function(d) { return x(d.time) })
             .bottom(function(d) { return y(d.total) })
-            .lineWidth(1)
-          .add(pv.Dot);
+          //.interpolate('step-after')
+            .strokeStyle('#666')
+            .lineWidth(4)
+          .add(pv.Dot)
+            .size(40)
+            .visible(function(d) { return this.index > 0 })
+            .fillStyle('white')
+          .anchor('top').add(pv.Label)
+            .text(function(d) { return d.total.toString() })
+            .textAlign('right')
+            .font(large);
         
         vis.render();
     
