@@ -93,6 +93,26 @@
         return $rows;
     }
     
+    function client_list(&$dbh)
+    {
+        $q = sprintf("SELECT client AS name, ends, days, budget
+                      FROM client_info
+                      ORDER BY client ASC");
+
+        $res = mysql_query($q, $dbh);
+        $rows = array();
+        
+        while($row = mysql_fetch_array($res, MYSQL_ASSOC))
+        {
+            $row['days']= floatval($row['days']);
+            $row['time'] = strtotime("{$row['ends']} 12:00:00");
+            $row['date'] = date('M j', $row['time']);
+            $rows[] = $row;
+        }
+        
+        return $rows;
+    }
+    
     function client_info(&$dbh, $name)
     {
         $q = sprintf("SELECT client AS name, ends, days, budget
