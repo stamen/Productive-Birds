@@ -86,7 +86,13 @@ function render_client(data, info)
         .left(x(start.time))
         .strokeStyle('#ccc')
         .bottom(0)
-        .top(0);
+        .top(0)
+      .add(pv.Label)
+        .left(4)
+        .top(h - y(info.days) + 24)
+        .text(nice_days(info.days) + ' days')
+        .textAlign('left')
+        .font(large);
     
     //
     // left hand ticks
@@ -112,8 +118,9 @@ function render_client(data, info)
         .bottom(0)
         .height(y(info.days))
       .add(pv.Label)
-        .top(h - 6)
-        .text(function(d) { return info.date })
+        .top(h - 8)
+        .left(x(info.time) - 4)
+        .text('Ends ' + info.date)
         .textAlign('right')
         .font(large);
     
