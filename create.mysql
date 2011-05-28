@@ -17,11 +17,12 @@ CREATE TABLE same_clients
     PRIMARY KEY (`client1`, `client2`)
 );
 
-CREATE TABLE client_limits
+CREATE TABLE client_info
 (
     `client`    VARCHAR(32) NOT NULL,
     `ends`      VARCHAR(10) NOT NULL,
     `days`      FLOAT NOT NULL,
+    `budget`    INT NOT NULL,
     
     PRIMARY KEY (`client`)
 );
