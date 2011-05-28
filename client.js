@@ -54,11 +54,7 @@ function render_client(data, info)
         .strokeStyle('#ccc')
         .left(function(d) { return x(d.time) })
         .height(function(d) { return y(d.total) })
-        .bottom(y(0))
-      .anchor('bottom').add(pv.Label)
-        .text(function(d) { return d.date })
-        .textAlign('right')
-        .font(small);
+        .bottom(y(0));
     
     //
     // bottom rule
@@ -128,13 +124,11 @@ function render_client(data, info)
     // weekly time
     //
     vis.add(pv.Line)
-        /*
         .data(data)
         .left(function(d) { return x(d.time) })
         .bottom(function(d) { return y(d.total) })
-        .strokeStyle('white')
-        .lineWidth(8)
-        */
+        .strokeStyle('#fafafa')
+        .lineWidth(10)
       .add(pv.Line)
         .data(data)
         .left(function(d) { return x(d.time) })
@@ -150,6 +144,17 @@ function render_client(data, info)
         .visible(function() { return this.index > 0 })
         .textAlign('right')
         .font(large);
+    
+    //
+    // weekly dates
+    //
+    vis.add(pv.Label)
+        .data(data)
+        .left(function(d) { return x(d.time) + 8 })
+        .bottom(-20)
+        .text(function(d) { return d.date })
+        .textAlign('right')
+        .font(small);
     
     //
     // pig
