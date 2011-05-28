@@ -150,6 +150,14 @@
     <script type="text/javascript">
     <!--
     
+        function nice_days(days)
+        {
+            return days.toFixed(1)
+                .replace(/\.0$/, '')
+                .replace(/\.5$/, '½')
+                .replace(/^0/, '');
+        }
+    
         var data = <?=json_encode($client_days)?>;
         var limit = <?=json_encode($client_limits)?>;
         
@@ -269,7 +277,7 @@
             .size(function(d) { return (this.index > 0) ? 40 : 20 })
             .fillStyle(function(d) { return (this.index > 0) ? 'white' : '#666' })
           .anchor('top').add(pv.Label)
-            .text(function(d) { return d.total.toString().replace(/\.5$/, '½'); })
+            .text(function(d) { return nice_days(d.total); })
             .visible(function() { return this.index > 0 })
             .textAlign('right')
             .font(large);
