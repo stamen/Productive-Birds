@@ -93,11 +93,21 @@
         return $rows;
     }
     
-    function client_list(&$dbh)
+    function client_list(&$dbh, $order)
     {
+        if($order == 'by-date') {
+            $order = 'ends ASC';
+        
+        } else if($order == 'by-size') {
+            $order = 'days DESC';
+        
+        } else {
+            $order = 'client ASC';
+        }
+    
         $q = sprintf("SELECT client AS name, ends, days, budget
                       FROM client_info
-                      ORDER BY client ASC");
+                      ORDER BY {$order}");
 
         $res = mysql_query($q, $dbh);
         $rows = array();
@@ -139,6 +149,44 @@
         
         while(preg_match('/\B(\d\d\d)\b/', $str))
             $str = preg_replace('/\B(\d\d\d)\b/', ',\1', $str);
+        
+        return $str;
+    }
+    
+    function nice_days($val)
+    {
+        $str = sprintf('%.1f', $val);
+        $str = preg_replace('/\.0$/', '', $str);
+        $str = preg_replace('/\.5$/', '½', $str);
+        $str = preg_replace('/^0/', '', $str);
+        
+        return $str;
+    }
+    
+    function nice_relative_date($time)
+    {
+        $diff = abs($time - time());
+        
+        if($diff > 45 * 86400) {
+            $val = round($diff / (30 * 86400));
+            $unit = 'month';
+        
+        } elseif($diff > 12 * 86400) {
+            $val = round($diff / (7 * 86400));
+            $unit = 'week';
+        
+        } elseif($diff > 36 * 3600) {
+            $val = round($diff / 86400);
+            $unit = 'day';
+        
+        } else {
+            return 'Now';
+        }
+        
+        $str = sprintf('%d %s%s %s',
+                       $val, $unit,
+                       ($val > 1 ? 's' : ''),
+                       ($time < time() ? 'ago' : 'from now'));
         
         return $str;
     }

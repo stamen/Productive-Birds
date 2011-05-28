@@ -18,12 +18,8 @@
     <title><?= $client_info['name'] ?> Client Info</title>
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <script src="protovis-r3.2.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="style.css" type="text/css" media="all">
     <script src="client.js" type="text/javascript"></script>
-    <style type="text/css" title="text/css">
-    <!--
-        h1 { font: 18px Georgia; }
-    -->
-    </style>
 </head>
 <body>
     <h1><?= $client_info['name'] ?> ($<?= nice_int($client_info['budget']) ?>)</h1>
