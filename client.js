@@ -44,7 +44,7 @@ function render_client(data, info)
         .left(function(d) { return x(d.time) })
         .height(function(d) { return y(d.total) })
         .bottom(0)
-        .fillStyle('#eee');
+        .fillStyle('#f4f4f4');
     
     //
     // weekly vertical rules
@@ -143,7 +143,8 @@ function render_client(data, info)
         .lineWidth(4)
       .add(pv.Dot)
         .size(function(d) { return (this.index > 0) ? 40 : 20 })
-        .fillStyle(function(d) { return (this.index > 0) ? 'white' : '#666' })
+        .strokeStyle(function(d) { return (this.index > 0) ? '#fafafa' : '#fff' })
+        .fillStyle('#666')
       .anchor('top').add(pv.Label)
         .text(function(d) { return nice_days(d.total); })
         .visible(function() { return this.index > 0 })
