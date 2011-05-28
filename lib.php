@@ -106,7 +106,7 @@
         {
             $row['days']= floatval($row['days']);
             $row['time'] = strtotime("{$row['ends']} 12:00:00");
-            $row['date'] = date('M j', $row['time']);
+            $row['date'] = date('F jS', $row['time']);
             $rows[] = $row;
         }
         
@@ -126,7 +126,7 @@
         {
             $row['days']= floatval($row['days']);
             $row['time'] = strtotime("{$row['ends']} 12:00:00");
-            $row['date'] = date('M j', $row['time']);
+            $row['date'] = date('F jS', $row['time']);
             return $row;
         }
         
