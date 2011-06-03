@@ -40,7 +40,7 @@ function render_client(data, info)
     // area of profitability
     //
     vis.add(pv.Area)
-        .data([{time: start.time, total: 0}, {time: Math.max(last.time, info.time), total: info.days}])
+        .data([{time: start.time, total: 0}, {time: info.time, total: info.days}])
         .left(function(d) { return x(d.time) })
         .height(function(d) { return y(d.total) })
         .bottom(0)
@@ -73,7 +73,7 @@ function render_client(data, info)
         .strokeStyle('#f90')
         .lineWidth(2)
         .left(0)
-        .right(0);
+        .right(x(Math.max(info.time, last.time)) - x(info.time));
     
     //
     // left-hand rule
@@ -162,7 +162,7 @@ function render_client(data, info)
     vis.add(pv.Panel)
         .width(46)
         .height(46)
-        .left(x(Math.max(last.time, info.time)) - 23)
+        .left(x(info.time) - 23)
         .bottom(y(info.days) - 23)
       .add(pv.Image)
         .url('pig.png')
