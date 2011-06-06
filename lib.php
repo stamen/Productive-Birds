@@ -143,6 +143,36 @@
         return null;
     }
     
+    function recent_clients(&$dbh)
+    {
+        $q = "SELECT client
+              FROM client_info
+              ORDER BY ends DESC";
+
+        $res = mysql_query($q, $dbh);
+        $names = array();
+        $seen = array();
+        
+        while($row = mysql_fetch_array($res, MYSQL_NUM))
+        {
+            $names[] = $row[0];
+            $seen[] = strtolower($row[0]);
+        }
+        
+        $q = "SELECT DISTINCT client
+              FROM utilization
+              ORDER BY week DESC
+              LIMIT 50";
+        
+        $res = mysql_query($q, $dbh);
+        
+        while($row = mysql_fetch_array($res, MYSQL_NUM))
+            if(!in_array(strtolower($row[0]), $seen))
+                $names[] = $row[0];
+        
+        return $names;
+    }
+    
     function nice_int($int)
     {
         $str = sprintf('%d', $int);
