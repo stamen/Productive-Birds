@@ -173,6 +173,25 @@
         return $names;
     }
     
+    function recent_people(&$dbh)
+    {
+        $people = array('ER', 'SA', 'MM', 'ASC', 'GS', 'JE', 'SC', 'RB', 'DM');
+        $time = time() - 6 * 7 * 86400;
+        $week = date('Y-', $time).'W'.date('W', $time);
+    
+        $q = "SELECT DISTINCT person
+              FROM utilization
+              WHERE week >= '{$week}'";
+
+        $res = mysql_query($q, $dbh);
+        
+        while($row = mysql_fetch_array($res, MYSQL_NUM))
+            if(!in_array($row[0], $people))
+                $people[] = $row[0];
+        
+        return $people;
+    }
+    
     function nice_int($int)
     {
         $str = sprintf('%d', $int);
