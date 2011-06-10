@@ -93,10 +93,10 @@
         return $rows;
     }
     
-    function client_list(&$dbh, $order)
+    function client_list(&$dbh, $order, $ended)
     {
         if($order == 'by-date') {
-            $order = 'ends ASC';
+            $order = ($ended == 'no') ? 'ends ASC' : 'ends DESC';
         
         } else if($order == 'by-size') {
             $order = 'days DESC';
@@ -107,6 +107,7 @@
     
         $q = sprintf("SELECT client AS name, ends, days, budget
                       FROM client_info
+                      WHERE ended = '{$ended}'
                       ORDER BY {$order}");
 
         $res = mysql_query($q, $dbh);

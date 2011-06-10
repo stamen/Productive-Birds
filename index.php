@@ -5,9 +5,13 @@
     $dbh = mysql_connect('localhost', 'time', '');
     mysql_select_db('timetracking', $dbh);
     
-    $clients_byname = client_list($dbh, 'by-name');
-    $clients_bydate = client_list($dbh, 'by-date');
-    $clients_bysize = client_list($dbh, 'by-size');
+    $current_byname = client_list($dbh, 'by-name', 'no');
+    $current_bydate = client_list($dbh, 'by-date', 'no');
+    $current_bysize = client_list($dbh, 'by-size', 'no');
+    
+    $past_byname = client_list($dbh, 'by-name', 'yes');
+    $past_bydate = client_list($dbh, 'by-date', 'yes');
+    $past_bysize = client_list($dbh, 'by-size', 'yes');
     
     mysql_close($dbh);
     
@@ -27,6 +31,8 @@
             float: left;
             width: 16em;
         }
+        
+        h2 { clear: left; }
     -->
     </style>
 </head>
@@ -36,7 +42,7 @@
     <div class="listing">
         <h3>By Name:</h3>
         <ul>
-        <? foreach($clients_byname as $info) { ?>
+        <? foreach($current_byname as $info) { ?>
             <li>
                 <a href="client.php?name=<?= urlencode($info['name']) ?>"><?= $info['name'] ?></a>
             </li>
@@ -47,7 +53,7 @@
     <div class="listing">
         <h3>By End Date:</h3>
         <ul>
-        <? foreach($clients_bydate as $info) { ?>
+        <? foreach($current_bydate as $info) { ?>
             <li>
                 <a href="client.php?name=<?= urlencode($info['name']) ?>"><?= $info['name'] ?></a>
                 <br>
@@ -60,7 +66,47 @@
     <div class="listing">
         <h3>By Size:</h3>
         <ul>
-        <? foreach($clients_bysize as $info) { ?>
+        <? foreach($current_bysize as $info) { ?>
+            <li>
+                <a href="client.php?name=<?= urlencode($info['name']) ?>"><?= $info['name'] ?></a>
+                <br>
+                $<?= nice_int($info['budget']) ?>,
+                <?= nice_days($info['days']) ?> days.
+            </li>
+        <? } ?>
+        </ul>
+    </div>
+
+    <h2>Past Projects</h2>
+
+    <div class="listing">
+        <h3>By Name:</h3>
+        <ul>
+        <? foreach($past_byname as $info) { ?>
+            <li>
+                <a href="client.php?name=<?= urlencode($info['name']) ?>"><?= $info['name'] ?></a>
+            </li>
+        <? } ?>
+        </ul>
+    </div>
+
+    <div class="listing">
+        <h3>By End Date:</h3>
+        <ul>
+        <? foreach($past_bydate as $info) { ?>
+            <li>
+                <a href="client.php?name=<?= urlencode($info['name']) ?>"><?= $info['name'] ?></a>
+                <br>
+                <?= nice_relative_date($info['time']) ?>.
+            </li>
+        <? } ?>
+        </ul>
+    </div>
+
+    <div class="listing">
+        <h3>By Size:</h3>
+        <ul>
+        <? foreach($past_bysize as $info) { ?>
             <li>
                 <a href="client.php?name=<?= urlencode($info['name']) ?>"><?= $info['name'] ?></a>
                 <br>
