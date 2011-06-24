@@ -96,7 +96,7 @@
     $people[] = '';
     $people[] = '';
     
-    $rows = 20;
+    $rows = 25;
     
     mysql_close($dbh);
     
