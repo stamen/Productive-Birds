@@ -182,6 +182,15 @@
                 source: clients
               });
           });
+        
+        YUI().use('event-key', function(Y)
+          {
+            var handle = Y.on('key', function(e)
+              {
+                e.halt();
+              },
+              'input[type=text]', 'down:13', Y);
+          });
     
     //-->
     </script>
