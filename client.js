@@ -23,8 +23,11 @@ function render_client(data, info)
     
     var w = 960,
         h = 400,
-        x = pv.Scale.linear(start.time, Math.max(last.time, info.time)).range(0, w),
+        end_time = Math.max(last.time, info.time),
+        total_days = (end_time - data[0].time) / 86400,
+        x = pv.Scale.linear(start.time, end_time).range(0, w),
         y = pv.Scale.linear(0, Math.max(total, info.days)).range(0, h),
+        tiny = '9px Georgia',
         small = '13px Georgia',
         large = '18px Georgia';
     
@@ -154,7 +157,7 @@ function render_client(data, info)
         .bottom(-20)
         .text(function(d) { return d.date })
         .textAlign('right')
-        .font(small);
+        .font(total_days > 160 ? tiny : small);
     
     //
     // pig
