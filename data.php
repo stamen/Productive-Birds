@@ -5,7 +5,7 @@
     $dbh = mysql_connect('localhost', 'time', '');
     mysql_select_db('timetracking', $dbh);
     
-    $q = "SELECT week, person, client, days
+    $q = "SELECT week, person, days, client
           FROM utilization
           WHERE count > 0
           ORDER BY week, person, client";
@@ -14,7 +14,7 @@
     $rows = array();
     
     header('Content-Type: text/plain');
-    echo join("\t", array('week', 'person', 'client', 'days'))."\n";
+    echo join("\t", array('week', 'person', 'days', 'client'))."\n";
     
     while($row = mysql_fetch_array($res, MYSQL_ASSOC))
         echo join("\t", $row)."\n";
