@@ -4,26 +4,28 @@
     
     $people = $_POST['people'];
     $clients = $_POST['clients'];
-    $person_days = $_POST['person_days'];
+    $client_days = $_POST['client_days'];
     
-    $dbh = mysql_connect('localhost', 'time', '');
-    mysql_select_db('timetracking', $dbh);
+    $dbh = connect_mysql();
     
-    if($_POST['week'] && is_array($people) && is_array($clients) && is_array($person_days))
+    if($_POST['week'] && is_array($people) && is_array($clients) && is_array($client_days))
     {
-        $q = sprintf("DELETE * FROM utilization WHERE `week` = '%s'",
+        header('content-type: text/plain');
+    
+        $q = sprintf("DELETE FROM utilization WHERE `week` = '%s'",
                      mysql_real_escape_string($_POST['week'], $dbh));
         
+        echo "{$q}\n\n";
         $res = mysql_query($q, $dbh);
         
-        foreach($person_days as $person => $client_days)
+        foreach($client_days as $client => $person_days)
         {
-            if(empty($people[$person]))
+            if(empty($clients[$client]))
                 continue;
             
-            foreach($client_days as $client => $days)
+            foreach($person_days as $person => $days)
             {
-                if(empty($clients[$client]))
+                if(empty($people[$person]))
                     continue;
 
                 if(empty($days) && $days != '0') {
@@ -54,9 +56,12 @@
                              mysql_real_escape_string($people[$person], $dbh),
                              $days);
                 
+                echo "{$q}\n\n";
                 $res = mysql_query($q, $dbh);
             }
         }
+        
+        die();
     }
     
     $weeks = array();
@@ -88,8 +93,21 @@
         $weeks[$week] = "{$name} ({$monday} - {$friday})";
     }
 
-    $clients = recent_clients($dbh);
-    $people = recent_people($dbh);
+    $current_clients = week_clients(&$dbh, $_GET['week']);
+
+    $recent_clients = recent_clients($dbh);
+    $recent_clients = array_merge($current_clients, $recent_clients);
+    $recent_clients = array_values(array_unique($recent_clients));
+    
+    if($_GET['week']) {
+        $this_week = $_GET['week'];
+        $people = week_people($dbh, $this_week);
+        $days = week_utilization(&$dbh, $this_week, $current_clients, $people);
+    
+    } else {
+        $people = recent_people($dbh);
+        $days = array();
+    }
     
     // pad some
     $people[] = '';
@@ -154,14 +172,18 @@
                 <th>
                 </th>
                 <? foreach($people as $person => $name) { ?>
-                    <th><input name="people[<?=$person?>]" value="<?= htmlspecialchars($name) ?>" tabindex="<?= 1 + ($person + 1) * ($rows + 1) ?>" type="text" size="3"></th>
+                    <? $tab = 1 + ($person + 1) * ($rows + 1); ?>
+                    <th><input name="people[<?=$person?>]" value="<?= htmlspecialchars($name) ?>" tabindex="<?=$tab?>" type="text" size="3"></th>
                 <? } ?>
             </tr>
-            <? for($row = 0; $row < $rows; $row++) { ?>
+            <? for($client = 0; $client < $rows; $client++) { ?>
                 <tr>
-                    <td><input name="clients[<?=$row?>]" tabindex="<?= 1 + $row ?>" class="client" type="text" size="32"></td>
+                    <? $tab = 1 + $client; ?>
+                    <td><input name="clients[<?=$client?>]" value="<?= htmlspecialchars($current_clients[$client]) ?>" tabindex="<?=$tab?>" class="client" type="text" size="32"></td>
                     <? foreach($people as $person => $name) { ?>
-                        <td><input name="person_days[<?=$person?>][<?=$row?>]" tabindex="<?= 2 + $row + ($person + 1) * ($rows + 1) ?>" type="text" size="3"></td>
+                        <? $tab = 2 + $client + ($person + 1) * ($rows + 1); ?>
+                        <? $value = is_array($days[$client]) && isset($days[$client][$person]) ? $days[$client][$person] : '' ?>
+                        <td><input name="client_days[<?=$client?>][<?=$person?>]" value="<?= htmlspecialchars($value) ?>" tabindex="<?=$tab?>" type="text" size="3"></td>
                     <? } ?>
                 </tr>
             <? } ?>
@@ -172,7 +194,7 @@
     <script type="text/javascript">
     <!--
     
-        var clients = <?=json_encode($clients)?>;
+        var clients = <?=json_encode($recent_clients)?>;
         
         YUI().use('autocomplete', 'autocomplete-filters', 'autocomplete-highlighters', function(Y)
           {

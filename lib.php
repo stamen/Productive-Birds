@@ -1,5 +1,14 @@
 <?php
 
+    define('PEOPLE', 'ER SA MM ASC GS JE SC RB NK');
+
+    function &connect_mysql()
+    {
+        $dbh = mysql_connect('localhost', 'time', '');
+        mysql_select_db('timetracking', $dbh);
+        return $dbh;
+    }
+
     function client_synonyms(&$dbh, $name)
     {
         $q = sprintf("SELECT ca.client1 AS ca1, ca.client2 AS ca2,
@@ -144,6 +153,78 @@
         return null;
     }
     
+    function week_clients(&$dbh, $week)
+    {
+        $q = sprintf("SELECT DISTINCT `client`
+                      FROM utilization
+                      WHERE week = '%s'
+                      ORDER BY `order`",
+                     mysql_real_escape_string($week, $dbh));
+        
+        $res = mysql_query($q, $dbh);
+        $clients = array();
+        
+        while($row = mysql_fetch_array($res, MYSQL_NUM))
+            $clients[] = $row[0];
+        
+        return $clients;
+    }
+    
+    function week_people(&$dbh, $week)
+    {
+        $people = explode(' ', PEOPLE);
+
+        $q = sprintf("SELECT DISTINCT `person`
+                      FROM utilization
+                      WHERE week = '%s'",
+                     mysql_real_escape_string($week, $dbh));
+        
+        $res = mysql_query($q, $dbh);
+        
+        while($row = mysql_fetch_array($res, MYSQL_NUM))
+            if(!in_array($row[0], $people))
+                $people[] = $row[0];
+        
+        return $people;
+    }
+    
+   /**
+    * Return a nested array of clients and people, using numeric indexes.
+    */
+    function week_utilization(&$dbh, $week, $clients, $people)
+    {
+        $q = sprintf("SELECT DISTINCT `client`
+                      FROM utilization
+                      WHERE week = '%s'",
+                     mysql_real_escape_string($week, $dbh));
+        
+        $res = mysql_query($q, $dbh);
+
+        $client_days = array();
+        
+        while($row = mysql_fetch_array($res, MYSQL_ASSOC))
+        {
+            $client = array_search($row['client'], $clients);
+            $client_days[$client] = array();
+        }
+        
+        $q = sprintf("SELECT `client`, `person`, `days`
+                      FROM utilization
+                      WHERE week = '%s'",
+                     mysql_real_escape_string($week, $dbh));
+        
+        $res = mysql_query($q, $dbh);
+
+        while($row = mysql_fetch_array($res, MYSQL_ASSOC))
+        {
+            $client = array_search($row['client'], $clients);
+            $person = array_search($row['person'], $people);
+            $client_days[$client][$person] = $row['days'];
+        }
+        
+        return $client_days;
+    }
+    
     function recent_clients(&$dbh)
     {
         $q = "SELECT client
@@ -176,7 +257,7 @@
     
     function recent_people(&$dbh)
     {
-        $people = array('ER', 'SA', 'MM', 'ASC', 'GS', 'JE', 'SC', 'RB', 'DM');
+        $people = explode(' ', PEOPLE);
         $time = time() - 6 * 7 * 86400;
         $week = date('Y-', $time).'W'.date('W', $time);
     

@@ -5,8 +5,10 @@ CREATE TABLE utilization
     `person`    VARCHAR(16) NOT NULL,
     `days`      FLOAT,
     `count`     TINYINT DEFAULT 1,
+    `order`     INT AUTO_INCREMENT,
     
-    PRIMARY KEY (`week`, `client`, `person`)
+    PRIMARY KEY (`week`, `client`, `person`),
+    INDEX `order` (`order`)
 );
 
 CREATE TABLE same_clients
