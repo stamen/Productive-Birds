@@ -22,7 +22,7 @@ function render_client(data, info)
     }
     
     var w = 960,
-        h = 390,
+        h = 340,
         end_time = Math.max(last.time, info.time),
         total_days = (end_time - data[0].time) / 86400,
         x = pv.Scale.linear(start.time, end_time).range(0, w),
@@ -96,7 +96,7 @@ function render_client(data, info)
     // left hand ticks
     //
     vis.add(pv.Rule)
-        .data(y.ticks())
+        .data(y.ticks(8))
         .visible(function() { return this.index > 0 })
         .strokeStyle('#ccc')
         .bottom(y)
@@ -181,6 +181,139 @@ function render_client(data, info)
         .bottom(y(last.total) - 20)
       .add(pv.Image)
         .url('bird.png')
+    
+    vis.render();
+}
+
+function render_people(data, info)
+{
+    var maximum = 0,
+        layers = [],
+        people = {},
+        weeks = {};
+    
+    for(var i = 0; i < data.length; i++)
+    {
+        var w = data[i].week,
+            p = data[i].person;
+        
+        if(!(p in people))
+        {
+            people[p] = {'index': layers.length, 'total': 0};
+            
+            // put in the very first one twice
+            var start = {'person': data[i].person, 'days': data[i].days, 'time': data[i].time - 7*86400, 'week': ''};
+            layers.push([start]);
+        }
+        
+        if(!(w in weeks))
+        {
+            weeks[w] = 0;
+        }
+        
+        weeks[w] += data[i].days || 0;
+        people[p].total += data[i].days || 0;
+        layers[people[p].index].push(data[i]);
+        maximum = Math.max(maximum, weeks[w]);
+    }
+    
+    // sort with the busiest people at the front
+    layers.sort(function(a, b) { return people[b[1].person].total - people[a[1].person].total });
+    
+    var start = layers[0][0],
+        last = layers[0][layers[0].length - 1];
+    
+    var w = 960,
+        h = 160,
+        end_time = Math.max(last.time, info.time),
+        total_days = (end_time - layers[0][0].time) / 86400,
+        x = pv.Scale.linear(start.time, end_time).range(0, w),
+        y = pv.Scale.linear(0, maximum).range(0, h),
+        small = '13px Georgia',
+        large = '18px Georgia';
+
+    var vis = new pv.Panel()
+        .width(w)
+        .height(h)
+        .left(40)
+        .right(25)
+        .bottom(30)
+        .top(40);
+    
+    var fills = pv.colors('#ff7f0e', '#ffbb78', '#2ca02c', '#98df8a',
+                          '#17becf', '#9edae5', '#bcbd22', '#dbdb8d')
+                          .by(function(d) { return d.person });
+    
+    //
+    // area of profitability
+    //
+    vis.add(pv.Area)
+        .data([{time: start.time, total: 0}, {time: info.time, total: info.days}])
+        .left(function(d) { return x(d.time) })
+        .height(y(5 * 86400* info.days / (last.time - layers[0][0].time)))
+        .right(x(last.time))
+        .bottom(0)
+        .fillStyle('#f4f4f4');
+    
+    //
+    // area chart
+    //
+    vis.add(pv.Layout.Stack)
+        .layers(layers)
+        .x(function(d) { return x(d.time) })
+        .y(function(d) { return y(d.days) })
+      .layer.add(pv.Area)
+        .fillStyle(fills);
+    
+    //
+    // bottom rule
+    //
+    vis.add(pv.Rule)
+        .bottom(y(0))
+        .strokeStyle('#ccc')
+        .left(0)
+        .right(0);
+    
+    //
+    // left-hand rule
+    //
+    vis.add(pv.Rule)
+        .left(x(start.time))
+        .strokeStyle('#ccc')
+        .bottom(0)
+        .top(0)
+      .add(pv.Label)
+        .left(4)
+        .top(h - y(info.days) + 24)
+        .text(nice_days(info.days) + ' days')
+        .textAlign('left')
+        .font(large);
+    
+    //
+    // left hand ticks
+    //
+    vis.add(pv.Rule)
+        .data(y.ticks(4))
+        .visible(function() { return this.index > 0 })
+        .strokeStyle('#ccc')
+        .bottom(y)
+        .left(-5)
+        .width(5)
+      .anchor('left').add(pv.Label)
+        .text(y.tickFormat)
+        .font(small);
+    
+    //
+    // weekly dates
+    //
+    vis.add(pv.Label)
+        .data(layers[0])
+        .left(function(d) { return x(d.time) + 8 })
+        .bottom(total_days > 160 ? -15 : -20)
+        .text(function(d) { return d.date })
+        .textAlign('right')
+        .textAngle(total_days > 160 ? -0.393 : 0.000)
+        .font(small);
     
     vis.render();
 }

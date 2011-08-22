@@ -25,16 +25,22 @@
     <h1><?= $client_info['name'] ?> ($<?= nice_int($client_info['budget']) ?>)</h1>
 
     <p>
-    <script type="text/javascript">
-    <!--
+        <script type="text/javascript">
+        <!--
+            var days = <?=json_encode($client_days)?>;
+            var people = <?=json_encode($client_people)?>;
+            var info = <?=json_encode($client_info)?>;
     
-        var data = <?=json_encode($client_days)?>;
-        var info = <?=json_encode($client_info)?>;
-        
-        render_client(data, info);
-    
-    //-->
-    </script>
+            render_client(days, info);
+        //-->
+        </script>
+    </p>
+    <p>
+        <script type="text/javascript">
+        <!--
+            render_people(people, info);
+        //-->
+        </script>
     </p>
 </body>
 </html>

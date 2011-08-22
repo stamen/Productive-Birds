@@ -70,7 +70,7 @@
         
         while($row = mysql_fetch_array($res, MYSQL_ASSOC))
         {
-            $row['days']= floatval($row['days']);
+            $row['days'] = floatval($row['days']);
             $row['time'] = strtotime("{$row['week']}-5 12:00:00");
             $row['date'] = date('M j', $row['time']);
             $rows[] = $row;
@@ -83,11 +83,27 @@
     {
         $names = client_synonyms_literal($dbh, $name);
         
-        $q = sprintf("SELECT person, SUM(days) AS days
-                      FROM utilization
-                      WHERE client IN (%s)
-                      GROUP BY person
-                      ORDER BY days DESC",
+        $q = sprintf("SELECT w.week, p.person, u.days
+                      FROM (
+                          SELECT DISTINCT week
+                          FROM utilization
+                          WHERE client IN (%s)
+                            AND `count` = 1
+                        ) AS w
+                      CROSS JOIN (
+                          SELECT DISTINCT person
+                          FROM utilization
+                          WHERE client IN (%s)
+                            AND `count` = 1
+                        ) AS p
+                      LEFT JOIN utilization AS u
+                        ON u.week = w.week
+                       AND u.person = p.person
+                       AND u.client IN (%s)
+                       AND u.count = 1
+                      ORDER BY w.week, p.person",
+                      $names,
+                      $names,
                       $names);
 
         $res = mysql_query($q, $dbh);
@@ -95,7 +111,9 @@
         
         while($row = mysql_fetch_array($res, MYSQL_ASSOC))
         {
-            $row['days']= floatval($row['days']);
+            $row['days'] = is_null($row['days']) ? null : floatval($row['days']);
+            $row['time'] = strtotime("{$row['week']}-5 12:00:00");
+            $row['date'] = date('M j', $row['time']);
             $rows[] = $row;
         }
         
