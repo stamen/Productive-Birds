@@ -15,7 +15,7 @@
         $q = sprintf("DELETE FROM utilization WHERE `week` = '%s'",
                      mysql_real_escape_string($_POST['week'], $dbh));
         
-        echo "{$q}\n\n";
+        //echo "{$q}\n\n";
         $res = mysql_query($q, $dbh);
         
         foreach($client_days as $client => $person_days)
@@ -56,58 +56,48 @@
                              mysql_real_escape_string($people[$person], $dbh),
                              $days);
                 
-                echo "{$q}\n\n";
+                //echo "{$q}\n\n";
                 $res = mysql_query($q, $dbh);
             }
         }
         
-        die();
+        header('HTTP/1.1 303 See Other');
+        header("Location: {$_SERVER['SCRIPT_NAME']}?week={$_POST['week']}");
+        exit();
     }
     
-    $weeks = array();
-    $this_week = null;
-    
-    foreach(range(0, 4) as $i)
-    {
-        $t = time() - 7 * $i * 86400;
-        $week = sprintf('%s-W%s', date('Y', $t), date('W', $t));
-        $monday = date('M jS', strtotime("{$week}-1"));
-        $friday = date('M jS', strtotime("{$week}-5"));
-        
-        switch($i)
-        {
-            case 0:
-                $name = 'This week';
-                $this_week = $week;
-                break;
-            
-            case 1:
-                $name = 'Last week';
-                break;
-            
-            default:
-                $name = sprintf('%d weeks ago', $i);
-                break;
-        }
-        
-        $weeks[$week] = "{$name} ({$monday} - {$friday})";
-    }
-
     $current_clients = week_clients(&$dbh, $_GET['week']);
 
     $recent_clients = recent_clients($dbh);
     $recent_clients = array_merge($current_clients, $recent_clients);
     $recent_clients = array_values(array_unique($recent_clients));
     
-    if($_GET['week']) {
-        $this_week = $_GET['week'];
+    if(isset($_GET['week'])) {
+        $explicit_week = true;
+
+        $t = strtotime($_GET['week']);
+        $this_week = nice_week($t);
+        $prev_week = nice_week($t - 604800);
+        $next_week = nice_week($t + 604800);
+
         $people = week_people($dbh, $this_week);
         $days = week_utilization(&$dbh, $this_week, $current_clients, $people);
     
     } else {
+        $explicit_week = false;
+
+        $this_week = nice_week(time());
+        $prev_week = nice_week(time() - 604800);
+
         $people = recent_people($dbh);
         $days = array();
+        
+        header('HTTP/1.1 303 See Other');
+        header("Location: {$_SERVER['SCRIPT_NAME']}?week={$this_week}");
+        exit();
     }
+    
+    $week_text = sprintf('Week ending %s', date('M j', strtotime("{$this_week}-5")));
     
     // pad some
     $people[] = '';
@@ -161,12 +151,19 @@
     <h1></h1>
     
     <form method="post" action="record.php">
-        <!--<select name="week" tabindex="1">
-            <? foreach($weeks as $value => $label) { ?>
-                <option label="<?= $label ?>" value="<?= $value ?>"><?= $label ?></option>
-            <? } ?>
-        </select>-->
+        <input type="submit" style="margin-right: 1em;">
         <input type="hidden" name="week" value="<?= $this_week ?>">
+
+        <? if($explicit_week) { ?>
+            <a href="<?= $_SERVER['SCRIPT_NAME'] ?>?week=<?= $prev_week ?>">«</a>
+            <?= $week_text ?>
+            <a href="<?= $_SERVER['SCRIPT_NAME'] ?>?week=<?= $next_week ?>">»</a>
+        
+        <? } else { ?>
+            <a href="<?= $_SERVER['SCRIPT_NAME'] ?>?week=<?= $prev_week ?>">«</a>
+            <?= $week_text ?>
+        <? } ?>
+
         <table>
             <tr>
                 <th>

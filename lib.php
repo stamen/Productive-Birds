@@ -284,6 +284,11 @@
         return $str;
     }
     
+    function nice_week($time)
+    {
+        return sprintf('%s-W%s', date('Y', $time), date('W', $time));
+    }
+    
     function nice_days($val)
     {
         $str = sprintf('%.1f', $val);
