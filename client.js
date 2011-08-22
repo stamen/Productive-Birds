@@ -22,12 +22,11 @@ function render_client(data, info)
     }
     
     var w = 960,
-        h = 400,
+        h = 390,
         end_time = Math.max(last.time, info.time),
         total_days = (end_time - data[0].time) / 86400,
         x = pv.Scale.linear(start.time, end_time).range(0, w),
         y = pv.Scale.linear(0, Math.max(total, info.days)).range(0, h),
-        tiny = '9px Georgia',
         small = '13px Georgia',
         large = '18px Georgia';
     
@@ -37,7 +36,7 @@ function render_client(data, info)
         .left(40)
         .right(25)
         .bottom(30)
-        .top(30);
+        .top(40);
     
     //
     // area of profitability
@@ -146,6 +145,7 @@ function render_client(data, info)
         .text(function(d) { return nice_days(d.total); })
         .visible(function() { return this.index > 0 })
         .textAlign('right')
+        .textAngle(total_days > 160 ? 0.393 : 0.000)
         .font(large);
     
     //
@@ -154,10 +154,11 @@ function render_client(data, info)
     vis.add(pv.Label)
         .data(data)
         .left(function(d) { return x(d.time) + 8 })
-        .bottom(-20)
+        .bottom(total_days > 160 ? -15 : -20)
         .text(function(d) { return d.date })
         .textAlign('right')
-        .font(total_days > 160 ? tiny : small);
+        .textAngle(total_days > 160 ? -0.393 : 0.000)
+        .font(small);
     
     //
     // pig
