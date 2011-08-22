@@ -293,13 +293,7 @@ function render_people(data, info)
         .left(x(start.time))
         .strokeStyle('#ccc')
         .bottom(0)
-        .top(0)
-      .add(pv.Label)
-        .left(4)
-        .top(h - y(info.days) + 24)
-        .text(nice_days(info.days) + ' days')
-        .textAlign('left')
-        .font(large);
+        .top(0);
     
     //
     // left hand ticks
