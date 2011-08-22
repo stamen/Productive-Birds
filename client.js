@@ -22,7 +22,7 @@ function render_client(data, info)
     }
     
     var w = 960,
-        h = 340,
+        h = 390,
         end_time = Math.max(last.time, info.time),
         total_days = (end_time - data[0].time) / 86400,
         x = pv.Scale.linear(start.time, end_time).range(0, w),
@@ -187,7 +187,8 @@ function render_client(data, info)
 
 function render_people(data, info)
 {
-    var maximum = 0,
+    var target = 0,
+        maximum = 0,
         layers = [],
         people = {},
         weeks = {};
@@ -195,15 +196,17 @@ function render_people(data, info)
     for(var i = 0; i < data.length; i++)
     {
         var w = data[i].week,
-            p = data[i].person;
+            p = data[i].person,
+            d = data[i].days || 0;
         
         if(!(p in people))
         {
             people[p] = {'index': layers.length, 'total': 0};
             
             // put in the very first one twice
-            var start = {'person': data[i].person, 'days': data[i].days, 'time': data[i].time - 7*86400, 'week': ''};
-            layers.push([start]);
+            var layer = [{'person': p, 'week': '', 'time': data[i].time - 7*86400, 'days': data[i].days}];
+            layer.person = data[i].person;
+            layers.push(layer);
         }
         
         if(!(w in weeks))
@@ -211,10 +214,15 @@ function render_people(data, info)
             weeks[w] = 0;
         }
         
-        weeks[w] += data[i].days || 0;
-        people[p].total += data[i].days || 0;
-        layers[people[p].index].push(data[i]);
+        weeks[w] += d;
+        people[p].total += d;
         maximum = Math.max(maximum, weeks[w]);
+        
+        // duplicate the friday data to monday to improve the visual appearance of the area chart.
+        var monday = {'person': p, 'week': w, 'time': data[i].time - 5 * 86400, 'days': data[i].days};
+        
+        layers[people[p].index].push(monday);
+        layers[people[p].index].push(data[i]);
     }
     
     // sort with the busiest people at the front
@@ -223,12 +231,16 @@ function render_people(data, info)
     var start = layers[0][0],
         last = layers[0][layers[0].length - 1];
     
+    target = 5 * 86400 * info.days / (last.time - layers[0][0].time);
+    maximum = Math.max(maximum, target);
+    
     var w = 960,
-        h = 160,
+        h = 120,
         end_time = Math.max(last.time, info.time),
         total_days = (end_time - layers[0][0].time) / 86400,
         x = pv.Scale.linear(start.time, end_time).range(0, w),
         y = pv.Scale.linear(0, maximum).range(0, h),
+        tiny = '9px Georgia',
         small = '13px Georgia',
         large = '18px Georgia';
 
@@ -240,8 +252,8 @@ function render_people(data, info)
         .bottom(30)
         .top(40);
     
-    var fills = pv.colors('#ff7f0e', '#ffbb78', '#2ca02c', '#98df8a',
-                          '#17becf', '#9edae5', '#bcbd22', '#dbdb8d')
+    var fills = pv.colors('#ff7f0e', '#ffbb78', '#2ca02c', '#98df8a', '#17becf',
+                          '#9edae5', '#bcbd22', '#dbdb8d', '#9c9ede', '#7375b5')
                           .by(function(d) { return d.person });
     
     //
@@ -250,7 +262,7 @@ function render_people(data, info)
     vis.add(pv.Area)
         .data([{time: start.time, total: 0}, {time: info.time, total: info.days}])
         .left(function(d) { return x(d.time) })
-        .height(y(5 * 86400* info.days / (last.time - layers[0][0].time)))
+        .height(y(target))
         .right(x(last.time))
         .bottom(0)
         .fillStyle('#f4f4f4');
@@ -314,6 +326,27 @@ function render_people(data, info)
         .textAlign('right')
         .textAngle(total_days > 160 ? -0.393 : 0.000)
         .font(small);
+    
+    //
+    // key to people colors
+    //
+    vis.add(pv.Bar)
+        .data(layers)
+        .left(function() { return 15 + this.index * 30 })
+        .fillStyle(fills)
+        .top(-10)
+        .width(25)
+        .height(15)
+      .add(pv.Label)
+        .text(function(d) { return d.person })
+        .font(small)
+        .left(function() { return 15 + this.index * 30 - 3 })
+        .top(-13)
+      .add(pv.Label)
+        .text(function(d) { return people[d.person].total })
+        .font(small)
+        .left(function() { return 15 + this.index * 30 - 3 })
+        .top(22);
     
     vis.render();
 }
