@@ -28,7 +28,8 @@ function render_client(data, info)
         x = pv.Scale.linear(start.time, end_time).range(0, w),
         y = pv.Scale.linear(0, Math.max(total, info.days)).range(0, h),
         small = '13px Georgia',
-        large = '18px Georgia';
+        large = '18px Georgia',
+        giant = '25px Georgia';
     
     var vis = new pv.Panel()
         .width(w)
@@ -120,7 +121,7 @@ function render_client(data, info)
         .left(x(info.time) - 4)
         .text('Ends ' + info.date)
         .textAlign('right')
-        .font(large);
+        .font(giant);
     
     //
     // weekly time
@@ -187,7 +188,8 @@ function render_client(data, info)
 
 function render_people(data, info)
 {
-    var target = 0,
+    var initials = ['JE', 'GS', 'SC', 'RB', 'NK', 'SA', 'MM', 'ER'],
+        target = 0,
         maximum = 0,
         layers = [],
         people = {},
@@ -255,6 +257,11 @@ function render_people(data, info)
     var fills = pv.colors('#ff7f0e', '#ffbb78', '#2ca02c', '#98df8a', '#17becf',
                           '#9edae5', '#bcbd22', '#dbdb8d', '#9c9ede', '#7375b5')
                           .by(function(d) { return d.person });
+    
+    for(var i in initials)
+    {
+        fills({person: initials[i]});
+    }
     
     //
     // area of profitability
