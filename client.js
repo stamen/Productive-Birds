@@ -233,7 +233,7 @@ function render_people(data, info)
     var start = layers[0][0],
         last = layers[0][layers[0].length - 1];
     
-    target = 5 * 86400 * info.days / (last.time - layers[0][0].time);
+    target = info.days * (7 * 86400) / (info.time - layers[0][0].time);
     maximum = Math.max(maximum, target);
     
     var w = 960,
