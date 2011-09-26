@@ -294,6 +294,9 @@
     
     function nice_int($int)
     {
+        if(is_null($int))
+            return '?';
+        
         $str = sprintf('%d', $int);
         
         while(preg_match('/\B(\d\d\d)\b/', $str))

@@ -23,10 +23,10 @@ function render_client(data, info)
     
     var w = 960,
         h = 390,
-        end_time = Math.max(last.time, info.time),
+        end_time = Math.max(last.time, info ? info.time : 0),
         total_days = (end_time - data[0].time) / 86400,
         x = pv.Scale.linear(start.time, end_time).range(0, w),
-        y = pv.Scale.linear(0, Math.max(total, info.days)).range(0, h),
+        y = pv.Scale.linear(0, Math.max(total, info ? info.days : 0)).range(0, h),
         small = '13px Georgia',
         large = '18px Georgia',
         giant = '25px Georgia';
@@ -36,18 +36,21 @@ function render_client(data, info)
         .height(h)
         .left(40)
         .right(25)
-        .bottom(30)
-        .top(40);
+        .bottom(info ? 30 : 60)
+        .top(info ? 40 : 80);
     
     //
     // area of profitability
     //
-    vis.add(pv.Area)
-        .data([{time: start.time, total: 0}, {time: info.time, total: info.days}])
-        .left(function(d) { return x(d.time) })
-        .height(function(d) { return y(d.total) })
-        .bottom(0)
-        .fillStyle('#f4f4f4');
+    if(info)
+    {
+        vis.add(pv.Area)
+           .data([{time: start.time, total: 0}, {time: info.time, total: info.days}])
+           .left(function(d) { return x(d.time) })
+           .height(function(d) { return y(d.total) })
+           .bottom(0)
+           .fillStyle('#f4f4f4');
+    }
     
     //
     // weekly vertical rules
@@ -71,27 +74,34 @@ function render_client(data, info)
     //
     // top rule
     //
-    vis.add(pv.Rule)
-        .bottom(y((info.days)))
-        .strokeStyle('#f90')
-        .lineWidth(2)
-        .left(0)
-        .right(x(Math.max(info.time, last.time)) - x(info.time));
+    if(info)
+    {
+        vis.add(pv.Rule)
+           .bottom(y((info.days)))
+           .strokeStyle('#f90')
+           .lineWidth(2)
+           .left(0)
+           .right(x(Math.max(info.time, last.time)) - x(info.time));
+    }
     
     //
     // left-hand rule
     //
-    vis.add(pv.Rule)
-        .left(x(start.time))
-        .strokeStyle('#ccc')
-        .bottom(0)
-        .top(0)
-      .add(pv.Label)
-        .left(4)
-        .top(h - y(info.days) + 24)
-        .text(nice_days(info.days) + ' days')
-        .textAlign('left')
-        .font(large);
+    var lr = vis.add(pv.Rule)
+                .left(x(start.time))
+                .strokeStyle('#ccc')
+                .bottom(0)
+                .top(0);
+    
+    if(info)
+    {
+        lr.add(pv.Label)
+          .left(4)
+          .top(h - y(info.days) + 24)
+          .text(nice_days(info.days) + ' days')
+          .textAlign('left')
+          .font(large);
+    }
     
     //
     // left hand ticks
@@ -110,6 +120,8 @@ function render_client(data, info)
     //
     // right-hand rule and label
     //
+    if(info)
+    {
     vis.add(pv.Rule)
         .left(x(info.time))
         .strokeStyle('#f90')
@@ -122,6 +134,7 @@ function render_client(data, info)
         .text('Ends ' + info.date)
         .textAlign('right')
         .font(giant);
+    }
     
     //
     // weekly time
@@ -146,7 +159,7 @@ function render_client(data, info)
         .text(function(d) { return nice_days(d.total); })
         .visible(function() { return this.index > 0 })
         .textAlign('right')
-        .textAngle(total_days > 160 ? 0.393 : 0.000)
+        .textAngle(total_days > 160 ? (total_days > 240 ? 0.983 : 0.393) : 0.000)
         .font(large);
     
     //
@@ -158,19 +171,22 @@ function render_client(data, info)
         .bottom(total_days > 160 ? -15 : -20)
         .text(function(d) { return d.date })
         .textAlign('right')
-        .textAngle(total_days > 160 ? -0.393 : 0.000)
+        .textAngle(total_days > 160 ? (total_days > 240 ? -0.983 : -0.393) : 0.000)
         .font(small);
     
     //
     // pig
     //
-    vis.add(pv.Panel)
-        .width(46)
-        .height(46)
-        .left(x(info.time) - 23)
-        .bottom(y(info.days) - 23)
-      .add(pv.Image)
-        .url('pig.png')
+    if(info)
+    {
+        vis.add(pv.Panel)
+            .width(46)
+            .height(46)
+            .left(x(info.time) - 23)
+            .bottom(y(info.days) - 23)
+          .add(pv.Image)
+            .url('pig.png');
+    }
     
     //
     // bird
