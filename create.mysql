@@ -28,27 +28,3 @@ CREATE TABLE client_info
     
     PRIMARY KEY (`client`)
 );
-
-SELECT ca.client1 AS ca1,
-       ca.client2 AS ca2,
-       cb.client1 AS cb1,
-       cb.client2 AS cb2,
-       cc.client1 AS cc1,
-       cc.client2 AS cc2
-
-FROM same_clients AS ca
-
-LEFT JOIN same_clients AS cb
-  ON cb.client1 = ca.client1
-  OR cb.client1 = ca.client2
-  OR cb.client2 = ca.client1
-  OR cb.client2 = ca.client2
-
-LEFT JOIN same_clients AS cc
-  ON cc.client1 = cb.client1
-  OR cc.client1 = cb.client2
-  OR cc.client2 = cb.client1
-  OR cc.client2 = cb.client2
-
-WHERE ca.client1 = 'Garth'
-   OR ca.client2 = 'Garth';
