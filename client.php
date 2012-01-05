@@ -2,8 +2,7 @@
 
     require_once 'lib.php';
 
-    $dbh = mysql_connect('localhost', 'time', '');
-    mysql_select_db('timetracking', $dbh);
+    $dbh = connect_mysql();
     
     $client_days = client_days($dbh, $_GET['name']);
     $client_people = client_people($dbh, $_GET['name']);
