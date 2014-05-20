@@ -2,8 +2,7 @@
 
     require_once 'lib.php';
 
-    $dbh = mysql_connect('localhost', 'time', '');
-    mysql_select_db('timetracking', $dbh);
+    $dbh = connect_mysql();
     
     $current_byname = client_list($dbh, 'by-name', 'no');
     $current_bydate = client_list($dbh, 'by-date', 'no');

@@ -2,8 +2,7 @@
 
     require_once 'lib.php';
 
-    $dbh = mysql_connect('localhost', 'time', '');
-    mysql_select_db('timetracking', $dbh);
+    $dbh = connect_mysql();
     
     $q = "SELECT week, person, days, client
           FROM utilization
